@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	dockerregistrytype "github.com/docker/docker/api/types/registry"
@@ -16,18 +15,11 @@ func VerifyPullSecret(o PullSecretOpts) error {
 	var data AuthsType
 
 	jsonData, err := os.ReadFile(o.File)
-	if err != nil {
-		log.Fatalf("Error reading input file %s: %v\n", o.File, err)
-	}
-
 	check.Checker("Read input file", err)
 
 	err = json.Unmarshal(jsonData, &data)
-	if err != nil {
-		log.Fatalf("Error unmarshalling input file: %v", err)
-	}
-
 	check.Checker("Unmarshal JSON file", err)
+
 	fmt.Println()
 
 	if o.DissectRegistry {
