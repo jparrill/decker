@@ -19,16 +19,14 @@ func NewVerifyCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&opts.File, "authfile", "", "Path to the pull secret file")
-	cmd.Flags().BoolVar(&opts.DissectRegistry, "inspect", false, "Check the registries details included in PullSecret file")
-	err := cmd.MarkFlagRequired("authfile")
-	if err != nil {
+	cmd.Flags().BoolVar(&opts.Inspect, "inspect", false, "Check the registries details included in PullSecret file")
+	if err := cmd.MarkFlagRequired("authfile"); err != nil {
 		log.Fatal(err)
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Verifying pullsecret: %s\n", opts.File)
-
-		_ = verifypkg.VerifyPullSecret(opts)
+		verifypkg.VerifyPullSecret(opts)
 
 		return nil
 	}

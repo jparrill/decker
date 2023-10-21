@@ -14,14 +14,14 @@ type RegistryRecordType struct {
 }
 
 type RegistryOpts struct {
-	Destination *url.URL
-	PullSecret  []byte
-	TLSVerify   bool
+	Registry string
+	Insecure bool
+	PullSecretOpts
 }
 
 type PullSecretOpts struct {
-	File            string
-	DissectRegistry bool
+	File    string
+	Inspect bool
 }
 
 type ImageOpts struct {

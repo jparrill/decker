@@ -18,20 +18,20 @@ const (
 )
 
 var (
-	BoldWhite     = lipgloss.NewStyle().Foreground(lipgloss.Color("7"))
-	BadStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-	TraceBadStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).PaddingLeft(4)
-	WarningStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("11")).PaddingLeft(4)
-	GoodStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
+	BoldWhite = lipgloss.NewStyle().Foreground(lipgloss.Color("7"))
+	Bad       = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+	TraceBad  = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).PaddingLeft(4)
+	Warning   = lipgloss.NewStyle().Foreground(lipgloss.Color("11")).PaddingLeft(4)
+	Good      = lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
 )
 
 func Checker(check string, err error) {
 
 	if err != nil {
-		fmt.Println(BadStyle.Render(BadState + " - " + check))
-		fmt.Println(TraceBadStyle.Render(Bullet + " Error: " + err.Error()))
+		fmt.Println(Bad.Render(BadState + " - " + check))
+		fmt.Println(TraceBad.Render(Bullet + " Error: " + err.Error()))
 
 	} else {
-		fmt.Println(GoodStyle.Render(GoodState + " - " + check))
+		fmt.Println(Good.Render(GoodState + " - " + check))
 	}
 }
