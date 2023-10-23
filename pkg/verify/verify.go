@@ -1,14 +1,14 @@
 package verify
 
 import (
+	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
-	"strings"
 
-	dockerregistrytype "github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/api/types"
 	dockerclient "github.com/docker/docker/client"
 
 	"github.com/jparrill/decker/pkg/core/check"
@@ -16,6 +16,7 @@ import (
 
 const (
 	alpineSampleImage = "quay.io/libpod/alpine:latest"
+	debug             = false
 )
 
 func VerifyPullSecret(o PullSecretOpts) {
@@ -38,7 +39,7 @@ func VerifyPullSecret(o PullSecretOpts) {
 				check.Checker("Registry Credentials", nil)
 			}
 
-			if err := VerifyRegistryCredentials(registryName, record); err != nil {
+			if err := VerifyRegistryCredentials(registryName, &record); err != nil {
 				check.Checker("Registry Authentication", fmt.Errorf("Error login into destination registry"))
 			}
 
@@ -56,36 +57,37 @@ func VerifyRegistry(o RegistryOpts) error {
 
 	registryData, ok := psData.Auths[o.Registry]
 	if !ok {
-		check.Checker("Find registry in pull secret", fmt.Errorf("registry %s not found in pull secret", o.Registry))
+		check.Checker("Find registry in pull secret", fmt.Errorf("Registry %s not found in pull secret", o.Registry))
 	}
 
-	err = VerifyRegistryCredentials(o.Registry, registryData)
-	check.Checker("Registry Authentication", err)
+	err = VerifyRegistryCredentials(o.Registry, &registryData)
+	if err != nil {
+		panic(err)
+	}
+
+	err = VerifyRegistryPushAndPull(o.Registry, &registryData)
+	if err != nil {
+		panic(err)
+	}
 
 	return nil
 
 }
 
-func VerifyRegistryCredentials(registryURL string, record RegistryRecordType) error {
+func VerifyRegistryCredentials(registryURL string, record *RegistryRecordType) error {
 
 	dCli, err := dockerclient.NewClientWithOpts()
 	if err != nil {
 		return err
 	}
 
-	fillAuthCredentials(&record)
+	fillAuthCredentials(record)
 
-	authConfig := dockerregistrytype.AuthConfig{
-		ServerAddress: registryURL,
-		Username:      record.Username,
-		Password:      record.Password,
-		Auth:          record.Auth,
-	}
-
-	_, err = dCli.RegistryLogin(context.Background(), authConfig)
+	_, err = dCli.RegistryLogin(context.Background(), getRegistryAuth(registryURL, record))
 	if err != nil {
 		return err
 	}
+	check.Checker("Registry Authentication", err)
 
 	return nil
 }
@@ -108,26 +110,59 @@ func GetPullSecretData(authfile string) (AuthsType, error) {
 	return data, nil
 }
 
-func fillAuthCredentials(record *RegistryRecordType) error {
+func VerifyRegistryPushAndPull(registryURL string, record *RegistryRecordType) error {
 
-	if len(record.Username) <= 0 || len(record.Password) <= 0 {
-		authBytes, err := base64.StdEncoding.DecodeString(record.Auth)
-		if err != nil {
-			return err
-		}
-		authPair := strings.Split(string(authBytes), ":")
-		if len(authPair) != 2 {
-			return fmt.Errorf("Bad formed authentication token")
-		}
-		record.Username = authPair[0]
-		record.Password = authPair[1]
+	privateRegistryAuth, err := getEncodedRegistryAuth(registryURL, record)
+	if err != nil {
+		return fmt.Errorf("failed creating auth for image push: %w", err)
 	}
 
-	if len(record.Auth) <= 0 {
-		authString := fmt.Sprintf("%s:%s", record.Username, record.Password)
-		record.Auth = base64.StdEncoding.EncodeToString([]byte(authString))
+	dCli, err := dockerclient.NewClientWithOpts(
+		dockerclient.WithAPIVersionNegotiation(),
+	)
+	if err != nil {
+		return err
 	}
+
+	ref, err := prepareTemporaryImage(dCli, "", registryURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse image (%s): %w", alpineSampleImage, err)
+	}
+
+	// Push
+	rc, err := dCli.ImagePush(context.Background(), ref.String(), types.ImagePushOptions{
+		All:          true,
+		RegistryAuth: privateRegistryAuth,
+	})
+
+	defer rc.Close()
+	if debug {
+		io.Copy(os.Stdout, rc)
+	} else {
+		var b bytes.Buffer
+		io.Copy(&b, rc)
+	}
+
+	check.Checker("Registry Push Permissions", err)
+
+	// Delete local image
+	_, err = dCli.ImageRemove(context.Background(), ref.String(), types.ImageRemoveOptions{
+		Force:         true,
+		PruneChildren: true,
+	})
+
+	// Download image from custom registry again
+	if err := ensureSourceImage(dCli, ref.String()); err != nil {
+		return err
+	}
+
+	// Pull
+	err = getImage(dCli, ref.String(), privateRegistryAuth)
+	if err != nil {
+		return err
+	}
+
+	check.Checker("Registry Pull Permissions", err)
 
 	return nil
-
 }

@@ -5,6 +5,7 @@ go 1.21.3
 require (
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/docker/docker v24.0.6+incompatible
+	github.com/openshift/library-go v0.0.0-20231020125034-5a2d9fe760b3
 	github.com/spf13/cobra v1.7.0
 )
 
@@ -30,9 +31,8 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/net v0.13.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	golang.org/x/tools v0.9.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )

@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"fmt"
 	"log"
 
 	verifypkg "github.com/jparrill/decker/pkg/verify"
@@ -30,7 +29,6 @@ func NewVerifyCommand() *cobra.Command {
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		fmt.Println("verify registry")
 		verifypkg.VerifyRegistry(opts)
 		return nil
 	}
