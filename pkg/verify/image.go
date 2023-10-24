@@ -66,6 +66,10 @@ func (ci *ContainerImage) EnsureSourceImage() error {
 		return fmt.Errorf("error querying the local images: %v", err)
 	}
 
+	if len(images) <= 0 {
+		return fmt.Errorf("The container image %s does not exists localy: %v", ci.ImageURL, err)
+	}
+
 	for _, image := range images {
 		if image.RepoTags[0] != ci.ImageURL {
 			return fmt.Errorf("The container image %s does not exists localy: %v", ci.ImageURL, err)

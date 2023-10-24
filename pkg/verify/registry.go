@@ -18,7 +18,7 @@ import (
 
 const (
 	alpineSampleImage = "quay.io/libpod/alpine:latest"
-	debug             = true
+	debug             = false
 )
 
 func (rg *Registry) Verify() error {
@@ -135,17 +135,14 @@ func (rge *RegistryEntry) VerifyRegistryPushAndPull() error {
 		Auth:     privateRegistryAuth,
 	}
 
-	// Download image from custom registry again
-	if err := cImage.EnsureSourceImage(); err != nil {
+	// Make sure the cImage is not in local
+	// If err means that the image is not there
+	if err := cImage.EnsureSourceImage(); err == nil {
 		return err
 	}
 
 	// Pull
 	err = cImage.GetImage()
-	if err != nil {
-		return err
-	}
-
 	check.Checker("Registry Pull Permissions", err)
 
 	return nil
