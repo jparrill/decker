@@ -14,13 +14,6 @@ func NewVerifyCommand() *cobra.Command {
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		//ctx := cmd.Context()
-		//if opts.Timeout > 0 {
-		//	var cancel context.CancelFunc
-		//	ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
-		//	defer cancel()
-		//}
-
 		fmt.Println("verify image")
 		return nil
 	}

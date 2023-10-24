@@ -22,6 +22,7 @@ func NewVerifyCommand() *cobra.Command {
 	cmd.Flags().StringVar(&registry.URL, "url", "", "Registry url to check access to.")
 	cmd.Flags().StringVar(&registry.FilePath, "authfile", "", "Pull secret to authenticate against the destination registry")
 	cmd.Flags().BoolVar(&registry.Insecure, "insecure", false, "Allow insecure registry connections.")
+	cmd.Flags().BoolVar(&registry.Debug, "debug", false, "Debug mode to verify the Pull Secret")
 	if err := cmd.MarkFlagRequired("url"); err != nil {
 		log.Fatal(err)
 	}

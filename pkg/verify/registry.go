@@ -1,11 +1,13 @@
 package verify
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	dockerregistrytype "github.com/docker/docker/api/types/registry"
@@ -16,7 +18,7 @@ import (
 
 const (
 	alpineSampleImage = "quay.io/libpod/alpine:latest"
-	debug             = false
+	debug             = true
 )
 
 func (rg *Registry) Verify() error {
@@ -43,13 +45,11 @@ func (rg *Registry) Verify() error {
 	)
 
 	err = registryEntry.VerifyRegistryCredentials()
-	if err != nil {
-		panic(err)
-	}
+	check.Checker("Registry Authentication", err)
 
 	err = registryEntry.VerifyRegistryPushAndPull()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	return nil
@@ -72,7 +72,6 @@ func (rge *RegistryEntry) VerifyRegistryCredentials() error {
 	if err != nil {
 		return err
 	}
-	check.Checker("Registry Authentication", err)
 
 	return nil
 }
@@ -100,27 +99,27 @@ func (rge *RegistryEntry) VerifyRegistryPushAndPull() error {
 		RegistryAuth: privateRegistryAuth,
 	})
 
-	defer func() {
-		err := rc.Close()
-		if err != nil {
-			panic(err)
-		}
-	}()
+	defer rc.Close()
+
+	var out bytes.Buffer
+
+	_, err = io.Copy(&out, rc)
+	if err != nil {
+		return fmt.Errorf("Error writting image to buffer %s: %v", ref.String(), err)
+	}
 
 	if debug {
-		_, err := io.Copy(os.Stdout, rc)
-		if err != nil {
-			return fmt.Errorf("Error writting image to buffer %s: %v", ref.String(), err)
-		}
-	} else {
-		var b bytes.Buffer
-		_, err := io.Copy(&b, rc)
+		f := bufio.NewWriter(os.Stdout)
+		defer f.Flush()
+		_, err := f.Write(out.Bytes())
 		if err != nil {
 			return fmt.Errorf("Error writting image to buffer %s: %v", ref.String(), err)
 		}
 	}
 
-	check.Checker("Registry Push Permissions", err)
+	if strings.Contains(out.String(), "error") {
+		check.Checker("Registry Push Permissions", fmt.Errorf("Cannot push image to registry %s", ref.Registry))
+	}
 
 	// Delete local image
 	if _, err = dCli.ImageRemove(context.Background(), ref.String(), types.ImageRemoveOptions{
