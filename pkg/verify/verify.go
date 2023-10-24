@@ -27,7 +27,8 @@ type Registry struct {
 
 type ContainerImage struct {
 	DClient   *dockerclient.Client
-	ImageURL  string
+	URL       string
+	FilePath  string
 	Auth      string
 	TLSVerify bool
 	Debug     bool

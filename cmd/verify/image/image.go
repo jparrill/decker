@@ -2,19 +2,32 @@ package image
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/jparrill/decker/pkg/core/check"
+	"github.com/jparrill/decker/pkg/verify"
 	"github.com/spf13/cobra"
 )
 
 func NewVerifyCommand() *cobra.Command {
+	image := verify.ContainerImage{}
+
 	cmd := &cobra.Command{
 		Use:          "image",
 		Short:        "Verifies if a container image is in a destination registry",
 		SilenceUsage: true,
 	}
 
+	cmd.Flags().StringVar(&image.URL, "url", "", "Registry url to check access to.")
+	cmd.Flags().StringVar(&image.FilePath, "authfile", "", "Path to the pull secret file")
+	cmd.Flags().BoolVar(&image.Debug, "debug", false, "Debug mode to verify the Pull Secret")
+	if err := cmd.MarkFlagRequired("url"); err != nil {
+		log.Fatal(err)
+	}
+
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		fmt.Println("verify image")
+		fmt.Println("Verifying Image: " + check.BoldWhite.Render(image.URL))
+		image.Verify()
 		return nil
 	}
 

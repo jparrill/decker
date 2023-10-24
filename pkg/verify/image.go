@@ -3,6 +3,7 @@ package verify
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -10,15 +11,16 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	dockerclient "github.com/docker/docker/client"
+	"github.com/jparrill/decker/pkg/core/check"
 	"github.com/openshift/library-go/pkg/image/reference"
 )
 
 func (ci *ContainerImage) GetImage() error {
-	out, err := ci.DClient.ImagePull(context.Background(), ci.ImageURL, types.ImagePullOptions{
+	out, err := ci.DClient.ImagePull(context.Background(), ci.URL, types.ImagePullOptions{
 		RegistryAuth: ci.Auth,
 	})
 	if err != nil {
-		return fmt.Errorf("Error grabbing container image %s: %v", ci.ImageURL, err)
+		return fmt.Errorf("Error grabbing container image %s: %v", ci.URL, err)
 	}
 
 	defer out.Close()
@@ -26,13 +28,13 @@ func (ci *ContainerImage) GetImage() error {
 	if debug {
 		_, err := io.Copy(os.Stdout, out)
 		if err != nil {
-			return fmt.Errorf("Error writting image to buffer %s: %v", ci.ImageURL, err)
+			return fmt.Errorf("Error writting image to buffer %s: %v", ci.URL, err)
 		}
 	} else {
 		var b bytes.Buffer
 		_, err := io.Copy(&b, out)
 		if err != nil {
-			return fmt.Errorf("Error writting image to buffer %s: %v", ci.ImageURL, err)
+			return fmt.Errorf("Error writting image to buffer %s: %v", ci.URL, err)
 		}
 	}
 
@@ -50,11 +52,11 @@ func (ci *ContainerImage) RetagImage(srcImage, destImage string) error {
 
 func (ci *ContainerImage) EnsureSourceImage() error {
 	if ci.Debug {
-		fmt.Printf("Verifying Image: %s\n", ci.ImageURL)
+		fmt.Printf("Verifying Image: %s\n", ci.URL)
 	}
 
 	filters := filters.NewArgs()
-	filters.Add("reference", ci.ImageURL)
+	filters.Add("reference", ci.URL)
 
 	options := types.ImageListOptions{
 		All:     true,
@@ -66,13 +68,17 @@ func (ci *ContainerImage) EnsureSourceImage() error {
 		return fmt.Errorf("error querying the local images: %v", err)
 	}
 
+	if ci.Debug {
+		fmt.Println("Images found:", images)
+	}
+
 	if len(images) <= 0 {
-		return fmt.Errorf("The container image %s does not exists localy: %v", ci.ImageURL, err)
+		return fmt.Errorf("The container image %s does not exists", ci.URL)
 	}
 
 	for _, image := range images {
-		if image.RepoTags[0] != ci.ImageURL {
-			return fmt.Errorf("The container image %s does not exists localy: %v", ci.ImageURL, err)
+		if image.RepoTags[0] != ci.URL {
+			return fmt.Errorf("The container image %s does not exists", ci.URL)
 		}
 	}
 
@@ -83,9 +89,9 @@ func prepareTemporaryImage(dCli *dockerclient.Client, auth, registryURL string) 
 
 	// Pull source image
 	alpineImage := &ContainerImage{
-		DClient:  dCli,
-		ImageURL: alpineSampleImage,
-		Auth:     "",
+		DClient: dCli,
+		URL:     alpineSampleImage,
+		Auth:    "",
 	}
 
 	err := alpineImage.GetImage()
@@ -102,9 +108,9 @@ func prepareTemporaryImage(dCli *dockerclient.Client, auth, registryURL string) 
 	ref.Registry = registryURL
 
 	privateImage := &ContainerImage{
-		DClient:  dCli,
-		ImageURL: ref.String(),
-		Auth:     auth,
+		DClient: dCli,
+		URL:     ref.String(),
+		Auth:    auth,
 	}
 
 	// tag image locally
@@ -121,4 +127,35 @@ func prepareTemporaryImage(dCli *dockerclient.Client, auth, registryURL string) 
 	}
 
 	return &ref, nil
+}
+
+func (ci *ContainerImage) Verify() {
+	var data AuthsType
+
+	dClient, err := dockerclient.NewClientWithOpts()
+	check.Checker("Docker Client Generated", err)
+	ci.DClient = dClient
+
+	jsonData, err := os.ReadFile(ci.FilePath)
+	check.Checker("Read input file", err)
+
+	err = json.Unmarshal(jsonData, &data)
+	check.Checker("Unmarshal JSON file", err)
+
+	ref, err := reference.Parse(ci.URL)
+	check.Checker("Container Image Parsed", err)
+
+	registryEntry := NewRegistryAuth(
+		ref.Registry,
+		data.Auths[ref.Registry].Username,
+		data.Auths[ref.Registry].Password,
+		data.Auths[ref.Registry].Auth,
+	)
+
+	registryEntry.FillAuthCredentials()
+	ci.Auth, err = registryEntry.Encode()
+	check.Checker("Encoded Credentials", err)
+
+	err = ci.EnsureSourceImage()
+	check.Checker("Image Status", err)
 }

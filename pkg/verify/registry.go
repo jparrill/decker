@@ -138,9 +138,9 @@ func (rge *RegistryEntry) VerifyRegistryPushAndPull() error {
 	}
 
 	cImage := &ContainerImage{
-		DClient:  dCli,
-		ImageURL: ref.String(),
-		Auth:     privateRegistryAuth,
+		DClient: dCli,
+		URL:     ref.String(),
+		Auth:    privateRegistryAuth,
 	}
 
 	// Make sure the cImage is not in local
