@@ -1,15 +1,17 @@
 package registry
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/jparrill/decker/pkg/core/check"
 	verifypkg "github.com/jparrill/decker/pkg/verify"
 	"github.com/spf13/cobra"
 )
 
 func NewVerifyCommand() *cobra.Command {
 
-	opts := verifypkg.RegistryOpts{}
+	registry := verifypkg.Registry{}
 
 	cmd := &cobra.Command{
 		Use:          "registry",
@@ -17,9 +19,9 @@ func NewVerifyCommand() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().StringVar(&opts.Registry, "url", "", "Registry url to check access to.")
-	cmd.Flags().StringVar(&opts.PullSecretOpts.File, "authfile", "", "Pull secret to authenticate against the destination registry")
-	cmd.Flags().BoolVar(&opts.Insecure, "insecure", false, "Allow insecure registry connections.")
+	cmd.Flags().StringVar(&registry.URL, "url", "", "Registry url to check access to.")
+	cmd.Flags().StringVar(&registry.FilePath, "authfile", "", "Pull secret to authenticate against the destination registry")
+	cmd.Flags().BoolVar(&registry.Insecure, "insecure", false, "Allow insecure registry connections.")
 	if err := cmd.MarkFlagRequired("url"); err != nil {
 		log.Fatal(err)
 	}
@@ -29,7 +31,8 @@ func NewVerifyCommand() *cobra.Command {
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		verifypkg.VerifyRegistry(opts)
+		fmt.Println("Verifying Registry: " + check.BoldWhite.Render(registry.URL))
+		registry.Verify()
 		return nil
 	}
 

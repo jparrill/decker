@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"log"
 
-	verifypkg "github.com/jparrill/decker/pkg/verify"
+	"github.com/jparrill/decker/pkg/verify"
 	"github.com/spf13/cobra"
 )
 
 func NewVerifyCommand() *cobra.Command {
 
-	opts := verifypkg.PullSecretOpts{}
+	pullSecret := verify.PullSecret{}
 
 	cmd := &cobra.Command{
 		Use:          "pull-secret",
@@ -18,15 +18,16 @@ func NewVerifyCommand() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().StringVar(&opts.File, "authfile", "", "Path to the pull secret file")
-	cmd.Flags().BoolVar(&opts.Inspect, "inspect", false, "Check the registries details included in PullSecret file")
+	cmd.Flags().StringVar(&pullSecret.FilePath, "authfile", "", "Path to the pull secret file")
+	cmd.Flags().BoolVar(&pullSecret.Inspect, "inspect", false, "Check the registries details included in PullSecret file")
+	cmd.Flags().BoolVar(&pullSecret.Debug, "debug", false, "Debug mode to verify the Pull Secret")
 	if err := cmd.MarkFlagRequired("authfile"); err != nil {
 		log.Fatal(err)
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("Verifying pullsecret: %s\n", opts.File)
-		verifypkg.VerifyPullSecret(opts)
+		fmt.Printf("Verifying pullsecret: %s\n", pullSecret.FilePath)
+		pullSecret.Verify()
 
 		return nil
 	}

@@ -12,8 +12,8 @@ type Check struct {
 }
 
 const (
-	GoodState = "✔︎"
-	BadState  = "⨯"
+	GoodState = "[✔︎]"
+	BadState  = "[⨯]"
 	Bullet    = "•"
 )
 
@@ -28,10 +28,10 @@ var (
 func Checker(check string, err error) {
 
 	if err != nil {
-		fmt.Println(Bad.Render(BadState + " - " + check))
-		fmt.Println(TraceBad.Render(Bullet + " Error: " + err.Error()))
+		fmt.Println(Bad.Render("	" + BadState + " - " + check))
+		fmt.Println(TraceBad.Render("	" + Bullet + " Error: " + err.Error()))
 
 	} else {
-		fmt.Println(Good.Render(GoodState + " - " + check))
+		fmt.Println(Good.Render("	" + GoodState + " - " + check))
 	}
 }

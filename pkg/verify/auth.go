@@ -5,14 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	dockerregistrytype "github.com/docker/docker/api/types/registry"
 )
 
-func fillAuthCredentials(record *RegistryRecordType) error {
+func NewRegistryAuth(registryURL, user, pass, auth string) *RegistryEntry {
+	return &RegistryEntry{
+		ServerAddress: registryURL,
+		Username:      user,
+		Password:      pass,
+		Auth:          auth,
+	}
+}
 
-	if len(record.Username) <= 0 || len(record.Password) <= 0 {
-		authBytes, err := base64.StdEncoding.DecodeString(record.Auth)
+func (rge *RegistryEntry) FillAuthCredentials() error {
+
+	if len(rge.Username) <= 0 || len(rge.Password) <= 0 {
+		authBytes, err := base64.StdEncoding.DecodeString(rge.Auth)
 		if err != nil {
 			return err
 		}
@@ -20,31 +27,21 @@ func fillAuthCredentials(record *RegistryRecordType) error {
 		if len(authPair) != 2 {
 			return fmt.Errorf("Bad formed authentication token")
 		}
-		record.Username = authPair[0]
-		record.Password = authPair[1]
+		rge.Username = authPair[0]
+		rge.Password = authPair[1]
 	}
 
-	if len(record.Auth) <= 0 {
-		authString := fmt.Sprintf("%s:%s", record.Username, record.Password)
-		record.Auth = base64.StdEncoding.EncodeToString([]byte(authString))
+	if len(rge.Auth) <= 0 {
+		authString := fmt.Sprintf("%s:%s", rge.Username, rge.Password)
+		rge.Auth = base64.StdEncoding.EncodeToString([]byte(authString))
 	}
 
 	return nil
 }
 
-func getRegistryAuth(registryURL string, record *RegistryRecordType) dockerregistrytype.AuthConfig {
-	return dockerregistrytype.AuthConfig{
-		ServerAddress: registryURL,
-		Username:      record.Username,
-		Password:      record.Password,
-		Auth:          record.Auth,
-	}
-}
+func (rge *RegistryEntry) Encode() (string, error) {
 
-func getEncodedRegistryAuth(registryURL string, record *RegistryRecordType) (string, error) {
-	authConfig := getRegistryAuth(registryURL, record)
-
-	encodedJSON, err := json.Marshal(authConfig)
+	encodedJSON, err := json.Marshal(rge)
 	if err != nil {
 		return "", fmt.Errorf("Error marshalling authconfig: %v", err)
 	}
