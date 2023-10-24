@@ -129,21 +129,33 @@ func prepareTemporaryImage(dCli *dockerclient.Client, auth, registryURL string) 
 	return &ref, nil
 }
 
-func (ci *ContainerImage) Verify() {
+func (ci *ContainerImage) Verify() error {
 	var data AuthsType
 
 	dClient, err := dockerclient.NewClientWithOpts()
 	check.Checker("Docker Client Generated", err)
+	if err != nil {
+		return fmt.Errorf("Error generating docker client: %w", err)
+	}
 	ci.DClient = dClient
 
 	jsonData, err := os.ReadFile(ci.FilePath)
 	check.Checker("Read input file", err)
+	if err != nil {
+		return fmt.Errorf("Error reading authfile: %w", err)
+	}
 
 	err = json.Unmarshal(jsonData, &data)
 	check.Checker("Unmarshal JSON file", err)
+	if err != nil {
+		return fmt.Errorf("Error unmarshaling JSON authfile: %w", err)
+	}
 
 	ref, err := reference.Parse(ci.URL)
 	check.Checker("Container Image Parsed", err)
+	if err != nil {
+		return fmt.Errorf("Error parsing container image: %w", err)
+	}
 
 	registryEntry := NewRegistryAuth(
 		ref.Registry,
@@ -155,7 +167,15 @@ func (ci *ContainerImage) Verify() {
 	registryEntry.FillAuthCredentials()
 	ci.Auth, err = registryEntry.Encode()
 	check.Checker("Encoded Credentials", err)
+	if err != nil {
+		return fmt.Errorf("Error encoding credentials: %w", err)
+	}
 
 	err = ci.EnsureSourceImage()
 	check.Checker("Image Status", err)
+	if err != nil {
+		return fmt.Errorf("Error validating container image: %w", err)
+	}
+
+	return nil
 }

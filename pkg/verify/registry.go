@@ -35,6 +35,9 @@ func (rg *Registry) Verify() error {
 	registryData, ok := psData.Auths[rg.URL]
 	if !ok {
 		check.Checker("Find registry in pull secret", fmt.Errorf("Registry %s not found in pull secret", rg.URL))
+		if err != nil {
+			return fmt.Errorf("Registry %s not found in pull secret", rg.URL)
+		}
 	}
 
 	registryEntry := NewRegistryAuth(
@@ -46,6 +49,9 @@ func (rg *Registry) Verify() error {
 
 	err = registryEntry.VerifyRegistryCredentials()
 	check.Checker("Registry Authentication", err)
+	if err != nil {
+		return err
+	}
 
 	err = registryEntry.VerifyRegistryPushAndPull()
 	if err != nil {
@@ -53,7 +59,6 @@ func (rg *Registry) Verify() error {
 	}
 
 	return nil
-
 }
 
 // VerifyRegistryCredentials verifies the registry credentials for the given RegistryEntry.

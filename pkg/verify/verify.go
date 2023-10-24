@@ -41,7 +41,7 @@ type PullSecret struct {
 }
 
 type Verifier interface {
-	Verify()
+	Verify() error
 }
 
 type RegistryEntry dockerregistrytype.AuthConfig

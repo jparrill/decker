@@ -3,6 +3,7 @@ package registry
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/jparrill/decker/pkg/core/check"
 	verifypkg "github.com/jparrill/decker/pkg/verify"
@@ -33,7 +34,13 @@ func NewVerifyCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Verifying Registry: " + check.BoldWhite.Render(registry.URL))
-		registry.Verify()
+		if err := registry.Verify(); err != nil {
+			if registry.Debug {
+				os.Exit(1)
+			} else {
+				os.Exit(0)
+			}
+		}
 		return nil
 	}
 

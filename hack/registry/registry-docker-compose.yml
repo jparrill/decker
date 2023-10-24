@@ -10,5 +10,5 @@ services:
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/registry.password
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
     volumes:
-      - ./docker-registry/data:/data
-      - ./docker-registry/auth:/auth
+      - /tmp:/data
+      - ./auth:/auth

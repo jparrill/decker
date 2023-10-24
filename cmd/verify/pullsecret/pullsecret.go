@@ -3,6 +3,7 @@ package pullsecret
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/jparrill/decker/pkg/verify"
 	"github.com/spf13/cobra"
@@ -27,7 +28,13 @@ func NewVerifyCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Verifying pullsecret: %s\n", pullSecret.FilePath)
-		pullSecret.Verify()
+		if err := pullSecret.Verify(); err != nil {
+			if pullSecret.Debug {
+				os.Exit(1)
+			} else {
+				os.Exit(0)
+			}
+		}
 
 		return nil
 	}
