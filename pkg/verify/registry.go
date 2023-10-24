@@ -56,6 +56,9 @@ func (rg *Registry) Verify() error {
 
 }
 
+// VerifyRegistryCredentials verifies the registry credentials for the given RegistryEntry.
+// It creates a new Docker client and logs in to the registry using the provided credentials.
+// Returns an error if the client cannot be created or if the login fails.
 func (rge *RegistryEntry) VerifyRegistryCredentials() error {
 
 	dCli, err := dockerclient.NewClientWithOpts()
@@ -76,6 +79,11 @@ func (rge *RegistryEntry) VerifyRegistryCredentials() error {
 	return nil
 }
 
+// VerifyRegistryPushAndPull verifies if the registry
+// - can be pushed and pulled by encoding the private registry auth,
+// - preparing a temporary image
+// - pushing the image to the registry
+// - pulling the image from the registry.
 func (rge *RegistryEntry) VerifyRegistryPushAndPull() error {
 
 	privateRegistryAuth, err := rge.Encode()
