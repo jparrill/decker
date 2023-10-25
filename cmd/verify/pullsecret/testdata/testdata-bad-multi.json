@@ -1,0 +1,35 @@
+{
+  "auths": {
+    "registry.lab01:5000": {
+      "auth": "ZHVtbXk6ZHVtbXk=",
+      "email": "jparrill@redhat.com"
+    },
+    "registry.lab02:5000": {
+      "auth": "asdasfgdfdgkldkfajskjdlkadlkmas=",
+      "username": "jparrill+beta",
+      "password": "POAKSDPOKASGOIDHJGOIJOFDSODKAPSAOKOGPI",
+      "email": "jparrill@redhat.com"
+    },
+    "registry.lab03:5000": {
+      "auth": "asdasfgdfdgkldkfajskjdlkadlkmas=",
+      "username": "jparrill+beta",
+      "password": "POAKSDPOKASGOIDHJGOIJOFDSODKAPSAOKOGPI",
+      "email": "jparrill@redhat.com"
+    },
+    "registry.lab04:5000": {
+      "email": "jparrill@redhat.com"
+    },
+    "quay.io": {
+      "auth": "Y3Z1bHR1cdEpiL01GTTFqcUoyYjVtKzNsVUxHVkYwbDFiYTJYYkE2cDRYSVZL"
+    },
+    "registry.redhat.io": {
+      "auth": "MTM2NDA4MDd8eWRhbGFsLXJlZGhhdDpleUpoYkdjaU9pSlNVelV4TWlKOS5leUp6ZFdJaU9pSmxPVEZoWW1Rek9USm1OR1UwT1RKallUYzNOV1ExWlRabE9XRmhORFJqT1NKOS5lTWpQQmZKZEI3NUU2cjZsWGtvc1RuZFF0TkRsMGdROVZCTHhBSW1EX0pFMVpKNlhEU09OMS02czhwWXdjZGx6VENpSGJJWmpBcWMxQmVCZXpiemE5V2V4TTV5UFdLdEJhMFJVTURMSm1TRnNDaTRGRml3bmZ5RFBjZ3RqakdpVDIyMDNyUENQOWZEdC1jcm9yZHJHNXVfNllIVjF0M180aEstWDZ4VEUxUFl4ZHlGMnpBTnJBYU5KdjQwREtTT2djTXg2UmFILVlBb2lYZFVkZERCZG1aUkJ4dGFYN2llNkRzMUlXZ0k1a1JvU01zdWhLOWFYNEpNcw=="
+    },
+    "brew.registry.redhat.io": {
+      "auth": "opodfogkdpgkodm"
+    },
+    "localhost:5005": {
+      "auth": "YWRtaW46YWRtaW4="
+    }
+  }
+}

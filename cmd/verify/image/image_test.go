@@ -15,17 +15,17 @@ func TestNewVerifyCommand(t *testing.T) {
 	}{
 		{
 			name:    "Successful container image verification",
-			args:    []string{"image", "--authfile", "../assets/test.json", "--url", "localhost:5005/libpod/alpine:latest"},
+			args:    []string{"image", "--authfile", "testdata.json", "--url", "localhost:5005/libpod/alpine:latest"},
 			wantErr: false,
 		},
 		{
 			name:    "Error, missing url flag",
-			args:    []string{"image", "--authfile", "../assets/test.json", "--url"},
+			args:    []string{"image", "--authfile", "testdata.json", "--url"},
 			wantErr: true,
 		},
 		{
 			name:    "Error, container image not found in registry",
-			args:    []string{"image", "--authfile", "../assets/test.json", "--url", "quay.io/libpod/alpina:latest"},
+			args:    []string{"image", "--authfile", "testdata.json", "--url", "quay.io/libpod/alpina:latest"},
 			wantErr: true,
 		},
 	}
