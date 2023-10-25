@@ -3,7 +3,6 @@ package image
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/jparrill/decker/pkg/core/check"
 	"github.com/jparrill/decker/pkg/verify"
@@ -29,11 +28,8 @@ func NewVerifyCommand() *cobra.Command {
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Verifying Image: " + check.BoldWhite.Render(image.URL))
 		if err := image.Verify(); err != nil {
-			if image.Debug {
-				os.Exit(1)
-			} else {
-				os.Exit(0)
-			}
+			fmt.Println()
+			return err
 		}
 		return nil
 	}
