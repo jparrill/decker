@@ -8,6 +8,7 @@ import (
 
 	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/image/v5/types"
+	"github.com/docker/docker/client"
 	coreImage "github.com/jparrill/decker/pkg/core/image"
 	coreReg "github.com/jparrill/decker/pkg/core/registry"
 
@@ -35,8 +36,8 @@ type OCPVersion struct {
 
 type RegistryClientProvider struct{}
 
-func NewValidateOCPImage(url, auth, filePath string) *OCPImage {
-	ci, err := coreImage.NewContainerImage(url, auth, filePath)
+func NewValidateOCPImage(url, auth, filePath string, dCLi *client.Client) *OCPImage {
+	ci, err := coreImage.NewContainerImage(url, auth, filePath, dCLi)
 	if err != nil {
 		panic(err)
 	}

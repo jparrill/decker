@@ -32,7 +32,7 @@ func NewValidateCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Validating Image: " + check.BoldWhite.Render(URL))
-		ocpImage := validate.NewValidateOCPImage(URL, "", FilePath)
+		ocpImage := validate.NewValidateOCPImage(URL, "", FilePath, nil)
 
 		if err := ocpImage.Validate(); err != nil {
 			fmt.Println()

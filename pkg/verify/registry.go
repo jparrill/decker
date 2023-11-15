@@ -96,8 +96,6 @@ func (reg *Registry) VerifyRegistryPushAndPull() error {
 		return err
 	}
 
-	fmt.Println(dCli, "", reg.URL, reg.FilePath)
-
 	ref, err := prepareTemporaryImage(dCli, "", reg.URL, reg.FilePath)
 	check.Checker("Prepare temporary image", err)
 
@@ -127,6 +125,7 @@ func (reg *Registry) VerifyRegistryPushAndPull() error {
 
 	if strings.Contains(out.String(), "error") {
 		check.Checker("Registry Push Permissions", fmt.Errorf("Cannot push image to registry %s", ref.Registry))
+		return fmt.Errorf("Cannot push image to registry %s", ref.Registry)
 	}
 
 	// Delete local image
@@ -137,7 +136,7 @@ func (reg *Registry) VerifyRegistryPushAndPull() error {
 		return fmt.Errorf("Error removing image %s from local machine: %v", ref.String(), err)
 	}
 
-	cImage := NewVerifyContainerImage(ref.String(), reg.EAuth, reg.FilePath)
+	cImage := NewVerifyContainerImage(ref.String(), reg.EAuth, reg.FilePath, dCli)
 
 	// Make sure the cImage is not in local
 	// If err means that the image is not there

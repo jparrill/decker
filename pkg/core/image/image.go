@@ -1,10 +1,9 @@
 package image
 
 import (
+	"bufio"
 	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -32,9 +31,9 @@ type ContainerImageInterface interface {
 	GetReference()
 }
 
-func NewContainerImage(url, auth, filepath string) (*ContainerImage, error) {
+func NewContainerImage(url, auth, filepath string, dCLi *dockerclient.Client) (*ContainerImage, error) {
 	ci := &ContainerImage{
-		DClient:   nil,
+		DClient:   dCLi,
 		URL:       url,
 		FilePath:  filepath,
 		Auth:      auth,
@@ -88,19 +87,12 @@ func (ci *ContainerImage) GetMetadata() error {
 }
 
 func (ci *ContainerImage) GetImage() error {
-	encodedJSON, err := json.Marshal(ci.Auth)
-	if err != nil {
-		return fmt.Errorf("Error marshalling authconfig: %v", err)
-	}
-
-	sDec := base64.URLEncoding.EncodeToString(encodedJSON)
-
 	out, err := ci.DClient.ImagePull(
 		context.Background(),
 		ci.URL,
 		types.ImagePullOptions{
 			All:          true,
-			RegistryAuth: sDec,
+			RegistryAuth: ci.Auth,
 		},
 	)
 	if err != nil {
@@ -116,7 +108,10 @@ func (ci *ContainerImage) GetImage() error {
 		}
 	} else {
 		var b bytes.Buffer
-		_, err := io.Copy(&b, out)
+
+		f := bufio.NewWriter(os.Stdout)
+		defer f.Flush()
+		f.Write(b.Bytes())
 		if err != nil {
 			return fmt.Errorf("Error writting image to buffer %s: %v", ci.URL, err)
 		}

@@ -33,7 +33,7 @@ func NewVerifyCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Verifying Image: " + check.BoldWhite.Render(URL))
-		image := verify.NewVerifyContainerImage(URL, "", FilePath)
+		image := verify.NewVerifyContainerImage(URL, "", FilePath, nil)
 		if err := image.Verify(); err != nil {
 			fmt.Println()
 			return err

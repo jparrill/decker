@@ -58,7 +58,7 @@ func (ci *ContainerImage) EnsureSourceImage() error {
 
 func prepareTemporaryImage(dCli *dockerclient.Client, auth, registryURL, filepath string) (*reference.DockerImageReference, error) {
 
-	alpineImage := NewVerifyContainerImage(alpineSampleImage, "", filepath)
+	alpineImage := NewVerifyContainerImage(alpineSampleImage, "", filepath, dCli)
 
 	err := alpineImage.GetImage()
 	if err != nil {
@@ -73,7 +73,7 @@ func prepareTemporaryImage(dCli *dockerclient.Client, auth, registryURL, filepat
 
 	ref.Registry = registryURL
 
-	privateImage := NewVerifyContainerImage(ref.String(), auth, filepath)
+	privateImage := NewVerifyContainerImage(ref.String(), auth, filepath, dCli)
 
 	// tag image locally
 	if err := privateImage.RetagImage(alpineSampleImage, ref.String()); err != nil {
@@ -133,8 +133,8 @@ func (ci *ContainerImage) Verify() error {
 	return nil
 }
 
-func NewVerifyContainerImage(url, auth, filePath string) *ContainerImage {
-	ci, err := coreImage.NewContainerImage(url, auth, filePath)
+func NewVerifyContainerImage(url, auth, filePath string, dCli *dockerclient.Client) *ContainerImage {
+	ci, err := coreImage.NewContainerImage(url, auth, filePath, dCli)
 	if err != nil {
 		panic(err)
 	}
