@@ -10,9 +10,20 @@ check:
 registry:
 	@echo "Starting registry..."
 	@cd hack/registry && docker-compose up -d registry
+	@echo
 
+registry-down:
+	@echo "Stopping registry..."
+	@cd hack/registry && docker-compose down registry
+	@echo
 
-.PHONY: test
-test: registry
+.PHONY: unit
+unit: registry
 	@echo "Running tests..."
 	@go test -race ./...
+	@echo
+
+test: registry unit registry-down
+
+
+
