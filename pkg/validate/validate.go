@@ -8,7 +8,9 @@ import (
 
 	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/image/v5/types"
-	"github.com/jparrill/decker/pkg/verify"
+	coreImage "github.com/jparrill/decker/pkg/core/image"
+	coreReg "github.com/jparrill/decker/pkg/core/registry"
+
 	imageapi "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -20,9 +22,9 @@ const (
 )
 
 type OCPImage struct {
-	URL        string
-	PullSecret verify.PullSecret
-	Debug      bool
+	coreImage.ContainerImage
+	SrcRegistry *coreReg.Registry
+	DstRegistry *coreReg.Registry
 }
 
 type OCPVersion struct {
@@ -32,6 +34,17 @@ type OCPVersion struct {
 }
 
 type RegistryClientProvider struct{}
+
+func NewValidateOCPImage(url, auth, filePath string) *OCPImage {
+	ci, err := coreImage.NewContainerImage(url, auth, filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	return &OCPImage{
+		ContainerImage: *ci,
+	}
+}
 
 func (p *RegistryClientProvider) Lookup(ctx context.Context, image string, pullSecret string) (releaseImage *ReleaseImage, err error) {
 	fileContents, err := ExtractImageFiles(ctx, image, pullSecret, ReleaseImageStreamFile, ReleaseImageMetadataFile)

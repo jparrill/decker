@@ -14,6 +14,7 @@ import (
 	dockerclient "github.com/docker/docker/client"
 
 	"github.com/jparrill/decker/pkg/core/check"
+	coreReg "github.com/jparrill/decker/pkg/core/registry"
 )
 
 const (
@@ -21,39 +22,24 @@ const (
 	debug             = false
 )
 
-func (rg *Registry) Verify() error {
+func (reg *Registry) Verify() error {
+	var ok bool
 
-	ps := &PullSecret{
-		FilePath: rg.FilePath,
-	}
+	ps := NewVerifyPullSecret(reg.FilePath, false, reg.Debug)
 
-	psData, err := ps.GetPullSecretData()
-	if err != nil {
-		return fmt.Errorf("Error getting pull secret data: %w", err)
-	}
-
-	registryData, ok := psData.Auths[rg.URL]
+	reg.PSData, ok = ps.Data.Auths[reg.URL]
 	if !ok {
-		check.Checker("Find registry in pull secret", fmt.Errorf("Registry %s not found in pull secret", rg.URL))
-		if err != nil {
-			return fmt.Errorf("Registry %s not found in pull secret", rg.URL)
-		}
+		check.Checker("Find registry in pull secret", fmt.Errorf("Registry %s not found in pull secret", reg.URL))
+		return fmt.Errorf("Registry %s not found in pull secret", reg.URL)
 	}
 
-	registryEntry := NewRegistryAuth(
-		rg.URL,
-		registryData.Username,
-		registryData.Password,
-		registryData.Auth,
-	)
-
-	err = registryEntry.VerifyRegistryCredentials()
+	err := reg.VerifyRegistryCredentials()
 	check.Checker("Registry Authentication", err)
 	if err != nil {
 		return err
 	}
 
-	err = registryEntry.VerifyRegistryPushAndPull()
+	err = reg.VerifyRegistryPushAndPull()
 	if err != nil {
 		return err
 	}
@@ -64,19 +50,27 @@ func (rg *Registry) Verify() error {
 // VerifyRegistryCredentials verifies the registry credentials for the given RegistryEntry.
 // It creates a new Docker client and logs in to the registry using the provided credentials.
 // Returns an error if the client cannot be created or if the login fails.
-func (rge *RegistryEntry) VerifyRegistryCredentials() error {
+func (reg *Registry) VerifyRegistryCredentials() error {
 
 	dCli, err := dockerclient.NewClientWithOpts()
 	if err != nil {
 		return err
 	}
 
-	err = rge.FillAuthCredentials()
+	err = reg.FillAuthCredentials()
 	if err != nil {
 		return err
 	}
 
-	_, err = dCli.RegistryLogin(context.Background(), dockerregistrytype.AuthConfig(*rge))
+	authConf := &dockerregistrytype.AuthConfig{
+		ServerAddress: reg.URL,
+		Username:      reg.PSData.Username,
+		Password:      reg.PSData.Password,
+		Auth:          reg.PSData.Auth,
+		Email:         reg.PSData.Email,
+	}
+
+	_, err = dCli.RegistryLogin(context.Background(), *authConf)
 	if err != nil {
 		return err
 	}
@@ -89,11 +83,10 @@ func (rge *RegistryEntry) VerifyRegistryCredentials() error {
 // - preparing a temporary image
 // - pushing the image to the registry
 // - pulling the image from the registry.
-func (rge *RegistryEntry) VerifyRegistryPushAndPull() error {
+func (reg *Registry) VerifyRegistryPushAndPull() error {
 
-	privateRegistryAuth, err := rge.Encode()
-	if err != nil {
-		return fmt.Errorf("failed creating auth for image push: %w", err)
+	if err := reg.Encode(); err != nil {
+		return err
 	}
 
 	dCli, err := dockerclient.NewClientWithOpts(
@@ -103,13 +96,15 @@ func (rge *RegistryEntry) VerifyRegistryPushAndPull() error {
 		return err
 	}
 
-	ref, err := prepareTemporaryImage(dCli, "", rge.ServerAddress)
+	fmt.Println(dCli, "", reg.URL, reg.FilePath)
+
+	ref, err := prepareTemporaryImage(dCli, "", reg.URL, reg.FilePath)
 	check.Checker("Prepare temporary image", err)
 
 	// Push
 	rc, err := dCli.ImagePush(context.Background(), ref.String(), types.ImagePushOptions{
 		All:          true,
-		RegistryAuth: privateRegistryAuth,
+		RegistryAuth: reg.EAuth,
 	})
 
 	defer rc.Close()
@@ -142,11 +137,7 @@ func (rge *RegistryEntry) VerifyRegistryPushAndPull() error {
 		return fmt.Errorf("Error removing image %s from local machine: %v", ref.String(), err)
 	}
 
-	cImage := &ContainerImage{
-		DClient: dCli,
-		URL:     ref.String(),
-		Auth:    privateRegistryAuth,
-	}
+	cImage := NewVerifyContainerImage(ref.String(), reg.EAuth, reg.FilePath)
 
 	// Make sure the cImage is not in local
 	// If err means that the image is not there
@@ -159,4 +150,12 @@ func (rge *RegistryEntry) VerifyRegistryPushAndPull() error {
 	check.Checker("Registry Pull Permissions", err)
 
 	return nil
+}
+
+func NewVerifyRegistry(url, filePath string, debug bool) *Registry {
+	reg := coreReg.NewRegistry(url, filePath, false, debug)
+
+	return &Registry{
+		Registry: *reg,
+	}
 }

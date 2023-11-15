@@ -1,27 +1,31 @@
 package validate
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/containers/image/v5/docker"
-	referencev5 "github.com/containers/image/v5/docker/reference"
-
-	//"github.com/containers/image/docker/reference"
-	"github.com/containers/image/v5/types"
 	"github.com/jparrill/decker/pkg/core/check"
+	coreReg "github.com/jparrill/decker/pkg/core/registry"
 	"github.com/jparrill/decker/pkg/verify"
 	"github.com/openshift/library-go/pkg/image/reference"
 )
 
 func (oi *OCPImage) Validate() error {
-	var ps verify.AuthsType
 	var err error
 
-	if ps, err = oi.PullSecret.GetPullSecretData(); err != nil {
-		return err
+	ps := verify.NewVerifyPullSecret(oi.FilePath, false, oi.Debug)
+
+	oi.SrcRegistry = coreReg.NewRegistry(
+		oi.SrcRegistry.URL,
+		oi.SrcRegistry.FilePath,
+		oi.SrcRegistry.TLSVerify,
+		oi.SrcRegistry.Debug,
+	)
+
+	oi.SrcRegistry.PSData = ps.Data.Auths[oi.SrcRegistry.URL]
+
+	if err := oi.SrcRegistry.Encode(); err != nil {
+		return fmt.Errorf("Error marshalling auth credentials: %w", err)
 	}
-	check.Checker("Pull Secret", err)
 
 	ref, err := reference.Parse(oi.URL)
 	check.Checker("Container Image Parsed", err)
@@ -29,61 +33,43 @@ func (oi *OCPImage) Validate() error {
 		return fmt.Errorf("Error parsing container image: %w", err)
 	}
 
-	if _, ok := ps.Auths[ref.Registry]; !ok {
-		return fmt.Errorf("Registry %s not found in pull secret", ref.String())
+	oi.Ref = &ref
+
+	if _, ok := ps.Data.Auths[oi.SrcRegistry.URL]; !ok {
+		return fmt.Errorf("Registry %s not found in pull secret", oi.SrcRegistry.URL)
 	}
 	check.Checker("Registry found in PullSecret", err)
 
-	if err := oi.CheckOCPImage(ps.Auths[ref.Registry]); err != nil {
-		return err
+	if err := oi.CheckContainerImage(
+		oi.SrcRegistry,
+	); err != nil {
+		return fmt.Errorf("Error checking container image: %w", err)
 	}
-	check.Checker("OCP Version validated", err)
+	check.Checker(fmt.Sprintf("Container Image validated %s", oi.Ref.Name), err)
 
 	return nil
 }
 
-func (oi *OCPImage) CheckOCPImage(vrt verify.RegistryRecordType) error {
+func (oi *OCPImage) CheckContainerImage(reg *coreReg.Registry) error {
 
-	registryEntry := verify.NewRegistryAuth(
-		oi.URL,
-		vrt.Username,
-		vrt.Password,
-		vrt.Auth,
-	)
-	err := registryEntry.FillAuthCredentials()
-	if err != nil {
-		return fmt.Errorf("Error filling auth credentials: %w", err)
+	if err := oi.GetMetadata(); err != nil {
+		return fmt.Errorf("Error getting container image metadata: %w", err)
 	}
 
-	sys := &types.SystemContext{
-		DockerAuthConfig: &types.DockerAuthConfig{
-			Username: registryEntry.Username,
-			Password: registryEntry.Password,
-		},
-		DockerInsecureSkipTLSVerify: types.NewOptionalBool(true),
-	}
-	named, err := referencev5.ParseDockerRef(oi.URL)
-	if err != nil {
-		return fmt.Errorf("Error parsing dockerRef: %v\n", err)
-	}
-	srcRef, err := docker.NewReference(named)
-	if err != nil {
-		return fmt.Errorf("Error creating image reference: %v\n", err)
-	}
+	fmt.Println("Manifest:", oi.Manifest)
 
-	// Get the image manifest
-	typesImageSource, err := srcRef.NewImageSource(context.Background(), sys)
-	if err != nil {
-		return fmt.Errorf("Error getting image manifest: %v\n", err)
-	}
+	//srcDigest, err := getDigestFromRegistry(publicImageName, publicRegistryURL)
+	//if err != nil {
+	//	fmt.Println("Error al obtener el digest del registro público:", err)
+	//	return
+	//}
 
-	data, name, err := typesImageSource.GetManifest(context.Background(), nil)
-	if err != nil {
-		return fmt.Errorf("Error getting image manifest: %v\n", err)
-	}
-
-	fmt.Println("Manifest: ", string(data))
-	fmt.Println("Name: ", name)
+	//// Obtiene el digest del registro privado
+	//destDigest, err := getDigestFromRegistry(privateImageName, privateRegistryURL)
+	//if err != nil {
+	//	fmt.Println("Error al obtener el digest del registro privado:", err)
+	//	return
+	//}
 
 	return nil
 }

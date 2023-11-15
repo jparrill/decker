@@ -5,13 +5,17 @@ import (
 	"log"
 
 	"github.com/jparrill/decker/pkg/core/check"
-	verifypkg "github.com/jparrill/decker/pkg/verify"
+	verify "github.com/jparrill/decker/pkg/verify"
 	"github.com/spf13/cobra"
 )
 
 func NewVerifyCommand() *cobra.Command {
-
-	registry := verifypkg.Registry{}
+	var (
+		URL       string
+		FilePath  string
+		TLSVerify bool
+		Debug     bool
+	)
 
 	cmd := &cobra.Command{
 		Use:          "registry",
@@ -19,10 +23,10 @@ func NewVerifyCommand() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().StringVar(&registry.URL, "url", "", "Registry url to check access to.")
-	cmd.Flags().StringVar(&registry.FilePath, "authfile", "", "Pull secret to authenticate against the destination registry")
-	cmd.Flags().BoolVar(&registry.Insecure, "insecure", false, "Allow insecure registry connections.")
-	cmd.Flags().BoolVar(&registry.Debug, "debug", false, "Debug mode to verify the Pull Secret")
+	cmd.Flags().StringVar(&URL, "url", "", "Registry url to check access to.")
+	cmd.Flags().StringVar(&FilePath, "authfile", "", "Pull secret to authenticate against the destination registry")
+	cmd.Flags().BoolVar(&TLSVerify, "tls-verify", false, "Allow insecure registry connections.")
+	cmd.Flags().BoolVar(&Debug, "debug", false, "Debug mode to verify the Pull Secret")
 	if err := cmd.MarkFlagRequired("url"); err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +36,8 @@ func NewVerifyCommand() *cobra.Command {
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Verifying Registry: " + check.BoldWhite.Render(registry.URL))
+		fmt.Println("Verifying Registry: " + check.BoldWhite.Render(URL))
+		registry := verify.NewVerifyRegistry(URL, FilePath, Debug)
 		if err := registry.Verify(); err != nil {
 			fmt.Println()
 			return err

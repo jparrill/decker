@@ -10,7 +10,11 @@ import (
 
 func NewVerifyCommand() *cobra.Command {
 
-	pullSecret := verify.PullSecret{}
+	var (
+		FilePath string
+		Inspect  bool
+		Debug    bool
+	)
 
 	cmd := &cobra.Command{
 		Use:          "pull-secret",
@@ -18,16 +22,17 @@ func NewVerifyCommand() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().StringVar(&pullSecret.FilePath, "authfile", "", "Path to the pull secret file")
-	cmd.Flags().BoolVar(&pullSecret.Inspect, "inspect", false, "Check the registries details included in PullSecret file")
-	cmd.Flags().BoolVar(&pullSecret.Debug, "debug", false, "Debug mode to verify the Pull Secret")
+	cmd.Flags().StringVar(&FilePath, "authfile", "", "Path to the pull secret file")
+	cmd.Flags().BoolVar(&Inspect, "inspect", false, "Check the registries details included in PullSecret file")
+	cmd.Flags().BoolVar(&Debug, "debug", false, "Debug mode to verify the Pull Secret")
 	if err := cmd.MarkFlagRequired("authfile"); err != nil {
 		log.Fatal(err)
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("Verifying pullsecret: %s\n", pullSecret.FilePath)
-		if err := pullSecret.Verify(); err != nil {
+		fmt.Printf("Verifying pullsecret: %s\n", FilePath)
+		pullsecret := verify.NewVerifyPullSecret(FilePath, Inspect, Debug)
+		if err := pullsecret.Verify(); err != nil {
 			if len(err) > 1 {
 				return fmt.Errorf("Multiple errors found...")
 			} else {

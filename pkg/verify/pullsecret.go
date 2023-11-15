@@ -1,34 +1,33 @@
 package verify
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/jparrill/decker/pkg/core/check"
+	corePs "github.com/jparrill/decker/pkg/core/pullsecret"
 )
 
+func NewVerifyPullSecret(filePath string, inspect, debug bool) *PullSecret {
+	ps := corePs.NewPullSecret(filePath, inspect, debug)
+
+	return &PullSecret{
+		PullSecret: *ps,
+	}
+}
+
 func (ps *PullSecret) Verify() []error {
-	var data AuthsType
 	var errs []error
-
-	jsonData, err := os.ReadFile(ps.FilePath)
-	check.Checker("Read input file", err)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("Error reading authfile: %w", err))
-	}
-
-	err = json.Unmarshal(jsonData, &data)
-	check.Checker("Unmarshal JSON file", err)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("Error reading authfile: %w", err))
-	}
 
 	fmt.Println()
 
 	if ps.Inspect {
-		for registryName, record := range data.Auths {
-			registryEntry := NewRegistryAuth(registryName, record.Username, record.Password, record.Auth)
+		for registryName, record := range ps.Data.Auths {
+			reg := NewVerifyRegistry(registryName, ps.FilePath, ps.Debug)
+			reg.PSData = record
+			if err := reg.Encode(); err != nil {
+				check.Checker("Marshaling registry authentication", err)
+				errs = append(errs, err)
+			}
 
 			fmt.Println("RegistryName: " + check.BoldWhite.Render(registryName))
 			if len(record.Auth) <= 0 && (len(record.Username) <= 0 && len(record.Password) <= 0) {
@@ -38,7 +37,7 @@ func (ps *PullSecret) Verify() []error {
 				check.Checker("Registry Credentials", nil)
 			}
 
-			if err := registryEntry.VerifyRegistryCredentials(); err != nil {
+			if err := reg.VerifyRegistryCredentials(); err != nil {
 				check.Checker("Registry Authentication", fmt.Errorf("Error login into destination registry"))
 				errs = append(errs, fmt.Errorf("Error login into destination registry"))
 			} else {
@@ -50,22 +49,4 @@ func (ps *PullSecret) Verify() []error {
 	}
 
 	return errs
-}
-
-func (ps *PullSecret) GetPullSecretData() (AuthsType, error) {
-	var data AuthsType
-
-	jsonData, err := os.ReadFile(ps.FilePath)
-	check.Checker("Read input file", err)
-	if err != nil {
-		return data, fmt.Errorf("Error reading input file: %v", err)
-	}
-
-	err = json.Unmarshal(jsonData, &data)
-	check.Checker("Unmarshal JSON file", err)
-	if err != nil {
-		return data, fmt.Errorf("Error unmarshalling JSON file: %v", err)
-	}
-
-	return data, nil
 }

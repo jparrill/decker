@@ -1,47 +1,19 @@
 package verify
 
 import (
-	dockerregistrytype "github.com/docker/docker/api/types/registry"
-	dockerclient "github.com/docker/docker/client"
+	coreImage "github.com/jparrill/decker/pkg/core/image"
+	corePullSecret "github.com/jparrill/decker/pkg/core/pullsecret"
+	coreReg "github.com/jparrill/decker/pkg/core/registry"
 )
 
-type AuthsType struct {
-	Auths map[string]RegistryRecordType
-}
-
-// RegistryRecordType is the struct representing the PullSecretcomponents
-type RegistryRecordType struct {
-	Auth     string `json:"auth,omitempty"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-	Email    string `json:"email,omitempty"`
-}
-
 type Registry struct {
-	URL      string
-	Insecure bool
-	FilePath string
-	PSData   RegistryRecordType
-	Debug    bool
+	coreReg.Registry
 }
 
 type ContainerImage struct {
-	DClient   *dockerclient.Client
-	URL       string
-	FilePath  string
-	Auth      string
-	TLSVerify bool
-	Debug     bool
+	coreImage.ContainerImage
 }
 
 type PullSecret struct {
-	FilePath string
-	Inspect  bool
-	Debug    bool
+	corePullSecret.PullSecret
 }
-
-type Verifier interface {
-	Verify() error
-}
-
-type RegistryEntry dockerregistrytype.AuthConfig

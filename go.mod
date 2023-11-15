@@ -4,7 +4,6 @@ go 1.21.3
 
 require (
 	github.com/charmbracelet/lipgloss v0.9.1
-	github.com/containers/image v3.0.2+incompatible
 	github.com/containers/image/v5 v5.28.0
 	github.com/docker/docker v24.0.6+incompatible
 	github.com/openshift/api v0.0.0-20231010075512-1ccc6058c62d
