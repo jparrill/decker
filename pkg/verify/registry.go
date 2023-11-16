@@ -17,11 +17,6 @@ import (
 	coreReg "github.com/jparrill/decker/pkg/core/registry"
 )
 
-const (
-	alpineSampleImage = "quay.io/libpod/alpine:latest"
-	debug             = false
-)
-
 func (reg *Registry) Verify() error {
 	var ok bool
 
@@ -145,16 +140,19 @@ func (reg *Registry) VerifyRegistryPushAndPull() error {
 	}
 
 	// Pull
-	err = cImage.GetImage()
+	err = cImage.GetImage(true)
 	check.Checker("Registry Pull Permissions", err)
 
 	return nil
 }
 
-func NewVerifyRegistry(url, filePath string, debug bool) *Registry {
-	reg := coreReg.NewRegistry(url, filePath, false, debug)
+func NewVerifyRegistry(url, filePath string, debug bool) (*Registry, error) {
+	reg, err := coreReg.NewRegistry(url, filePath, false, debug)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Registry{
 		Registry: *reg,
-	}
+	}, nil
 }

@@ -10,6 +10,7 @@ check:
 registry:
 	@echo "Starting registry..."
 	@cd hack/registry && docker-compose up -d registry
+	@sleep 5
 	@echo
 
 registry-down:

@@ -37,7 +37,10 @@ func NewVerifyCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Verifying Registry: " + check.BoldWhite.Render(URL))
-		registry := verify.NewVerifyRegistry(URL, FilePath, Debug)
+		registry, err := verify.NewVerifyRegistry(URL, FilePath, Debug)
+		if err != nil {
+			return err
+		}
 		if err := registry.Verify(); err != nil {
 			fmt.Println()
 			return err

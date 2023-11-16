@@ -6,6 +6,11 @@ import (
 	coreReg "github.com/jparrill/decker/pkg/core/registry"
 )
 
+const (
+	alpineSampleImage = "quay.io/libpod/alpine:latest"
+	debug             = false
+)
+
 type Registry struct {
 	coreReg.Registry
 }

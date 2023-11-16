@@ -22,7 +22,10 @@ func (ps *PullSecret) Verify() []error {
 
 	if ps.Inspect {
 		for registryName, record := range ps.Data.Auths {
-			reg := NewVerifyRegistry(registryName, ps.FilePath, ps.Debug)
+			reg, err := NewVerifyRegistry(registryName, ps.FilePath, ps.Debug)
+			if err != nil {
+				errs = append(errs, err)
+			}
 			reg.PSData = record
 			if err := reg.Encode(); err != nil {
 				check.Checker("Marshaling registry authentication", err)

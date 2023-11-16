@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	dockerclient "github.com/docker/docker/client"
 )
 
 type Registry struct {
+	DClient   *dockerclient.Client
 	URL       string
 	TLSVerify bool
 	FilePath  string
@@ -29,14 +32,32 @@ type RegistryEntryInterface interface {
 	Encode() error
 }
 
-func NewRegistry(url, filePath string, TLSVerify, debug bool) *Registry {
-	return &Registry{
+func NewRegistry(url, filePath string, TLSVerify, debug bool) (*Registry, error) {
+	reg := &Registry{
+		DClient:   nil,
 		URL:       url,
 		TLSVerify: TLSVerify,
 		FilePath:  filePath,
 		PSData:    RegistryRecordType{},
 		Debug:     debug,
 	}
+
+	if err := reg.SetDockerClient(); err != nil {
+		return nil, err
+	}
+
+	return reg, nil
+}
+
+func (reg *Registry) SetDockerClient() error {
+	var err error
+
+	reg.DClient, err = dockerclient.NewClientWithOpts()
+	if err != nil {
+		return fmt.Errorf("Error generating docker client: %w", err)
+	}
+
+	return nil
 }
 
 func (reg *Registry) FillAuthCredentials() error {

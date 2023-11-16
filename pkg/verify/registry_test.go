@@ -42,11 +42,14 @@ func TestVerifyRegistryPushAndPull(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			reg := NewVerifyRegistry(tc.serverAddress, staticPsFile, false)
+			reg, err := NewVerifyRegistry(tc.serverAddress, staticPsFile, false)
+			if err != nil {
+				t.Fatal(err)
+			}
 			reg.PSData.Username = tc.username
 			reg.PSData.Password = tc.password
 			reg.FilePath = staticPsFile
-			err := reg.VerifyRegistryPushAndPull()
+			err = reg.VerifyRegistryPushAndPull()
 			if tc.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -88,10 +91,13 @@ func TestVerifyRegistryCredentials(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			reg := NewVerifyRegistry(tc.serverAddress, "", false)
+			reg, err := NewVerifyRegistry(tc.serverAddress, "", false)
+			if err != nil {
+				t.Fatal(err)
+			}
 			reg.PSData.Username = tc.username
 			reg.PSData.Password = tc.password
-			err := reg.VerifyRegistryCredentials()
+			err = reg.VerifyRegistryCredentials()
 			if tc.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -123,8 +129,11 @@ func TestVerify(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			reg := NewVerifyRegistry(tc.regURL, tc.regPS, false)
-			err := reg.Verify()
+			reg, err := NewVerifyRegistry(tc.regURL, tc.regPS, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = reg.Verify()
 			if tc.wantErr {
 				assert.Error(t, err)
 			} else {
