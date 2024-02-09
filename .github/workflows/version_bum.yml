@@ -10,7 +10,7 @@ on:
         description: "Ref to release from"
         required: true
         type: string
-        default: master
+        default: main
 
 jobs:
   tag-release:

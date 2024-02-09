@@ -31,6 +31,6 @@ test: registry unit registry-down
 .PHONY: citest
 citest:
 	@echo "Running tests..."
-	@CGO_ENABLED=1 go test -race ./...
+	@go test -race ./...
 	@echo
 
