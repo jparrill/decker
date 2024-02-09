@@ -20,7 +20,7 @@ func NewCommand() *cobra.Command {
 		//	defer cancel()
 		//}
 
-		fmt.Println("diagnostic")
+		fmt.Println("diagnostic pkg under construction...")
 		return nil
 	}
 
