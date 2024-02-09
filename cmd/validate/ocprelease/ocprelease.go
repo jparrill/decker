@@ -38,8 +38,8 @@ func NewValidateCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Validating Images: ")
-		fmt.Printf("\bSource: " + check.BoldWhite.Render(SRCImage) + "\n")
-		fmt.Printf("\bDestination: " + check.BoldWhite.Render(DSTImage) + "\n")
+		fmt.Printf("Source: " + check.BoldWhite.Render(SRCImage) + "\n")
+		fmt.Printf("Destination: " + check.BoldWhite.Render(DSTImage) + "\n")
 
 		srcImage := validate.NewValidateOCPImage(SRCImage, "", FilePath, nil)
 		if Debug {
