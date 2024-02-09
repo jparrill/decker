@@ -13,6 +13,7 @@ registry:
 	@sleep 5
 	@echo
 
+.PHONY: registry-down
 registry-down:
 	@echo "Stopping registry..."
 	@cd hack/registry && docker-compose down registry
@@ -21,10 +22,15 @@ registry-down:
 .PHONY: unit
 unit: registry
 	@echo "Running tests..."
-	@go test -race ./...
+	@CGO_ENABLED=1 go test -race ./...
 	@echo
 
+.PHONY: test
 test: registry unit registry-down
 
-
+.PHONY: citest
+citest:
+	@echo "Running tests..."
+	@CGO_ENABLED=1 go test -race ./...
+	@echo
 
