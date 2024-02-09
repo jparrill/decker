@@ -12,8 +12,8 @@ concurrency:
 jobs:
   call-lint:
     uses: ./.github/workflows/_golangci-lint.yml
-  call-test:
+  call-unit:
     uses: ./.github/workflows/_unit.yml
   call-gorelease:
-    needs: [call-lint, call-test]
+    needs: [call-lint, call-unit]
     uses: ./.github/workflows/_gorelease.yml

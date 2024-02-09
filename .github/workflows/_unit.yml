@@ -9,19 +9,18 @@ jobs:
   test-linux:
     runs-on: ubuntu-latest
     services:
-      services:
-        registry:
-          image: registry:2
-          ports:
-          - "5005:5000"
-          environment:
-            REGISTRY_AUTH: htpasswd
-            REGISTRY_AUTH_HTPASSWD_REALM: Registry
-            REGISTRY_AUTH_HTPASSWD_PATH: /auth/registry.password
-            REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
-          volumes:
-            - /tmp:/data
-            - ./hack/registry/auth:/auth
+      registry:
+        image: registry:2
+        ports:
+        - "5005:5000"
+        env:
+          REGISTRY_AUTH: htpasswd
+          REGISTRY_AUTH_HTPASSWD_REALM: Registry
+          REGISTRY_AUTH_HTPASSWD_PATH: /auth/registry.password
+          REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
+        volumes:
+          - /tmp:/data
+          - ./hack/registry/auth:/auth
 
     name: Go unit tests (ubuntu-latest)
     steps:
