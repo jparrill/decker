@@ -32,7 +32,7 @@ jobs:
         go-version-file: ./go.mod
 
     - name: Set up gotestfmt
-      uses: gotesttools/gotestfmt-action@65f1d2228f06cc5e828b84597440fbd063d12ea2 # v2.1.0
+      uses: gotesttools/gotestfmt-action@8b4478c7019be847373babde9300210e7de34bfb # v2.2.0
 
     - uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # 4.0.0
       with:
@@ -51,6 +51,6 @@ jobs:
     - run: go build -ldflags="-s -w -X main.version=$(git describe --tags) -X main.date=$(date +"%Y-%m-%dT%H:%M:%S%z")"
 
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@4fe8c5f003fae66aa5ebb77cfd3e7bfbbda0b6b0 # 3.1.5
+      uses: codecov/codecov-action@e0b68c6749509c5f83f984dd99a76a1c1a231044 # 4.0.1
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
